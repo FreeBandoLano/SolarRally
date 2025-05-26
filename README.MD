@@ -2,7 +2,7 @@
 
 A hybrid solar + grid-powered EV charging station with real-time control, monitoring, and billing via a web-based dashboard and backend services.
 
-## Project Status (as of YYYY-MM-DD)
+## Project Status (as of 2025-05-26)
 
 We are currently progressing through the development roadmap outlined in `Project_Solar_Rally.txt`.
 
@@ -28,6 +28,4 @@ We are currently progressing through the development roadmap outlined in `Projec
 *   **Phase 3 – Frontend Dashboard (React + Tailwind):**
     *   Begin UI development for the live dashboard and session summaries.
 
-Further details can befound in `Project_Solar_Rally.txt` and the `docs/` directory.
-
-*(Please replace YYYY-MM-DD with the current date)* 
+Further details can befound in `Project_Solar_Rally.txt` and the `docs/` directory. 
