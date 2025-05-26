@@ -1,0 +1,107 @@
+Solar EV Charging Station – Control & Monitoring System web interface
+
+## 🧭 Overview
+This system enables **real-time control, monitoring, and billing** for a hybrid **solar + grid-powered EV charging station**, with a web-based dashboard and backend services. Designed to be embedded-friendly (ESP32) and cloud-deployable (FastAPI + PostgreSQL), it empowers users to visualize consumption, optimize costs, and switch energy sources dynamically.
+
+---
+
+## 🗺️ Roadmap
+
+### ✅ Phase 0 – Project Initialization
+- [x] Initialize Git repo and folder structure
+- [x] Define environment config (`.env`) for dev vs prod
+- [x] Set up Docker Compose (API, DB, MQTT broker)
+
+### ⚙️ Phase 1 – Embedded Interface Mock
+- [ ] Define MQTT message structure (e.g. `ev/telemetry` topic)
+- [ ] Create dummy data publisher (Python script simulating ESP32)
+- [ ] Document expected JSON frame (V, I, P, source, timestamp)
+
+### 🔌 Phase 2 – Backend API (FastAPI)
+- [ ] Scaffold `/sessions` REST endpoints (CRUD)
+- [ ] WebSocket route `/live/{session_id}` for real-time updates
+- [ ] Write cost computation logic from `E = ∑ P•Δt`
+- [ ] Connect to PostgreSQL (with TimescaleDB extension)
+- [ ] Add JWT authentication (admin/user roles)
+
+### 📊 Phase 3 – Frontend Dashboard (React + Tailwind)
+- [ ] Create Live Dashboard UI (live voltage, current, source)
+- [ ] Add Session Summary Page (bill breakdown, download PDF)
+- [ ] Implement Charts (energy over time using Plotly.js)
+- [ ] Admin Panel (OTA trigger, tariff editing, user roles)
+
+### 🧪 Phase 4 – Testing & Antifragility
+- [ ] Unit test: billing engine, MQTT reconnect logic
+- [ ] Add simulated PV drop conditions (fallback test)
+- [ ] Add offline SD-card log upload endpoint
+- [ ] Verify watchdog behavior on microcontroller
+
+### ☁️ Phase 5 – Deployment
+- [ ] Push to cloud VPS (Render, Fly.io, or Railway)
+- [ ] Configure HTTPS with Let’s Encrypt
+- [ ] Add logging + monitoring (Grafana + Prometheus optional)
+
+---
+
+## 🧱 Folder Structure (Proposed)
+```
+/SolarRally
+├── backend/
+│   ├── main.py
+│   ├── api/
+│   ├── models/
+│   ├── db/
+│   └── utils/
+├── frontend/
+│   ├── src/
+│   └── public/
+├── scripts/
+│   └── mock_publisher.py
+├── docs/
+├── .env
+├── docker-compose.yml
+└── README.md
+```
+
+---
+
+## 🔐 API Endpoints (Summary)
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/sessions/` | GET/POST | View/create session |
+| `/sessions/{id}` | GET/PUT/DELETE | Manage individual session |
+| `/live/{session_id}` | WebSocket | Live data updates |
+| `/auth/token` | POST | JWT login |
+
+---
+
+## 📦 Tech Stack
+- **ESP32** for embedded control
+- **MQTT** via Mosquitto for telemetry
+- **FastAPI** for backend APIs
+- **PostgreSQL + TimescaleDB** for time-series storage
+- **React + Tailwind** for frontend
+- **Docker Compose** for local deployment
+
+---
+
+## ✍️ License
+MIT License. Open-source for education, innovation, and solar tech advancement.
+
+---
+
+## 🧠 Future Enhancements
+- Mobile PWA interface
+- Dynamic pricing engine
+- Machine learning predictions (PV output forecast)
+
+---
+
+## 🤖 Maintainers
+- Lead Software Engineer: **Argentum (Delano Montplaisir)**  
+- Project Type: **Final Year Capstone**  
+- Scope: **IoT + Embedded Systems + Renewable Energy UX**
+
+---
+
+# [End of README]

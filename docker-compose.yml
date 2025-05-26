@@ -1,0 +1,12 @@
+services:
+  mosquitto:
+    image: eclipse-mosquitto:latest # Use the latest official Mosquitto image
+    container_name: mosquitto_broker
+    ports:
+      - "1883:1883"  # Default MQTT port
+      - "9001:9001"  # MQTT over WebSockets (useful for frontend later)
+    volumes:
+      - ./mosquitto/config:/mosquitto/config # Mounts a local config directory
+      - ./mosquitto/data:/mosquitto/data     # Mounts a local data directory for persistence
+      - ./mosquitto/log:/mosquitto/log       # Mounts a local log directory
+    restart: unless-stopped
