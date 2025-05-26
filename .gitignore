@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environments
+.env
+.venv/
+env/
+venv/
+ENV/
+
+# IDE / Editor specific
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Mosquitto
+mosquitto/data/
+mosquitto/log/
+
+# Node modules (for frontend, if applicable later)
+node_modules/
+
+# Build artifacts (if any)
+build/
+dist/
+*.egg-info/ 
