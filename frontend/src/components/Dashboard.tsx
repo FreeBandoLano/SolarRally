@@ -1,12 +1,12 @@
 import React from 'react'
-import { useWebSocket } from '../hooks/useWebSocket'
+import { useFirebaseData } from '../hooks/useFirebaseData'
 import StatsGrid from './StatsGrid'
 import PowerChart from './PowerChart'
 import SessionInfo from './SessionInfo'
 import EnergySourceIndicator from './EnergySourceIndicator'
 
 const Dashboard: React.FC = () => {
-  const { systemStats, evseUnits, isConnected } = useWebSocket()
+  const { systemStats, evseUnits, isConnected, telemetryData } = useFirebaseData()
 
   if (!isConnected) {
     return (
@@ -48,16 +48,16 @@ const Dashboard: React.FC = () => {
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
         {/* Power Chart - Takes up 2 columns on xl screens */}
         <div className="xl:col-span-2">
-          <PowerChart />
+          <PowerChart telemetryData={telemetryData} />
         </div>
 
         {/* Side Panel */}
         <div className="space-y-6">
           {/* Energy Source Indicator */}
-          <EnergySourceIndicator />
+          <EnergySourceIndicator telemetryData={telemetryData} />
           
           {/* Session Information */}
-          <SessionInfo />
+          <SessionInfo telemetryData={telemetryData} />
         </div>
       </div>
 

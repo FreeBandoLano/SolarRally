@@ -15,7 +15,7 @@ fastapi-users[sqlalchemy]==12.1.2
 python-jose[cryptography]==3.3.0
 passlib[bcrypt]==1.7.4
 python-multipart==0.0.6
-email-validator==2.1.0
+email-validator>=1.1.0,<2.1
 
 # Environment variables
 python-dotenv==1.0.0

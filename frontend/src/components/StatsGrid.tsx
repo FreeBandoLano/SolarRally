@@ -1,8 +1,8 @@
 import React from 'react'
-import { useWebSocket } from '../hooks/useWebSocket'
+import { useFirebaseData } from '../hooks/useFirebaseData'
 
 const StatsGrid: React.FC = () => {
-  const { systemStats, evseUnits } = useWebSocket()
+  const { systemStats, evseUnits } = useFirebaseData()
 
   // Use system stats if available, otherwise show placeholder
   const stats = systemStats || {

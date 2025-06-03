@@ -1,9 +1,9 @@
 import React from 'react'
 import { Zap, Wifi, WifiOff } from 'lucide-react'
-import { useWebSocket } from '../hooks/useWebSocket'
+import { useFirebaseData } from '../hooks/useFirebaseData'
 
 const Header: React.FC = () => {
-  const { isConnected, connectionError } = useWebSocket()
+  const { isConnected, connectionError } = useFirebaseData()
 
   return (
     <header className="bg-white shadow-card border-b border-gray-200">
