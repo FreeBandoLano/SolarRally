@@ -2,6 +2,7 @@
 
 ## Overview
 SolarRally is a comprehensive EV charging station management system designed for solar-powered charging infrastructure. The platform provides real-time monitoring, user management, session tracking, and IoT integration for electric vehicle charging stations.
+Access live webb app: https://solar-rally-global.web.app
 
 ## 🚀 Features
 
