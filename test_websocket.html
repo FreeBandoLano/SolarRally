@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SolarRally - Live Telemetry Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .status {
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+        .connected { background-color: #d4edda; color: #155724; }
+        .disconnected { background-color: #f8d7da; color: #721c24; }
+        .data-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .data-card {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 6px;
+            border-left: 4px solid #007bff;
+        }
+        .data-label {
+            font-size: 12px;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .data-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+            margin-top: 5px;
+        }
+        .log {
+            background: #000;
+            color: #00ff00;
+            padding: 15px;
+            border-radius: 4px;
+            height: 300px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        button:hover { background: #0056b3; }
+        button:disabled { background: #6c757d; cursor: not-allowed; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔌 SolarRally - Live Telemetry Test</h1>
+        
+        <div id="status" class="status disconnected">
+            Disconnected
+        </div>
+        
+        <div>
+            <button id="connectBtn" onclick="connect()">Connect</button>
+            <button id="disconnectBtn" onclick="disconnect()" disabled>Disconnect</button>
+            <button onclick="clearLog()">Clear Log</button>
+        </div>
+        
+        <h2>📊 Real-time Data</h2>
+        <div class="data-grid">
+            <div class="data-card">
+                <div class="data-label">Voltage</div>
+                <div class="data-value" id="voltage">--</div>
+            </div>
+            <div class="data-card">
+                <div class="data-label">Current</div>
+                <div class="data-value" id="current">--</div>
+            </div>
+            <div class="data-card">
+                <div class="data-label">Power</div>
+                <div class="data-value" id="power">--</div>
+            </div>
+            <div class="data-card">
+                <div class="data-label">Energy Source</div>
+                <div class="data-value" id="source">--</div>
+            </div>
+            <div class="data-card">
+                <div class="data-label">Status</div>
+                <div class="data-value" id="status-value">--</div>
+            </div>
+            <div class="data-card">
+                <div class="data-label">Temperature</div>
+                <div class="data-value" id="temperature">--</div>
+            </div>
+            <div class="data-card">
+                <div class="data-label">Session ID</div>
+                <div class="data-value" id="session">--</div>
+            </div>
+            <div class="data-card">
+                <div class="data-label">Total Energy</div>
+                <div class="data-value" id="energy">--</div>
+            </div>
+        </div>
+        
+        <h2>📝 Connection Log</h2>
+        <div id="log" class="log"></div>
+    </div>
+
+    <script>
+        let ws = null;
+        
+        function log(message) {
+            const logDiv = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            logDiv.innerHTML += `[${timestamp}] ${message}\n`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+        
+        function updateStatus(connected) {
+            const statusDiv = document.getElementById('status');
+            const connectBtn = document.getElementById('connectBtn');
+            const disconnectBtn = document.getElementById('disconnectBtn');
+            
+            if (connected) {
+                statusDiv.textContent = 'Connected to WebSocket';
+                statusDiv.className = 'status connected';
+                connectBtn.disabled = true;
+                disconnectBtn.disabled = false;
+            } else {
+                statusDiv.textContent = 'Disconnected';
+                statusDiv.className = 'status disconnected';
+                connectBtn.disabled = false;
+                disconnectBtn.disabled = true;
+            }
+        }
+        
+        function updateData(data) {
+            document.getElementById('voltage').textContent = data.voltage_v ? data.voltage_v.toFixed(1) + ' V' : '--';
+            document.getElementById('current').textContent = data.current_a ? data.current_a.toFixed(1) + ' A' : '--';
+            document.getElementById('power').textContent = data.power_w ? data.power_w.toFixed(0) + ' W' : '--';
+            document.getElementById('source').textContent = data.energy_source || '--';
+            document.getElementById('status-value').textContent = data.status || '--';
+            document.getElementById('temperature').textContent = data.temperature_c ? data.temperature_c.toFixed(1) + ' °C' : '--';
+            document.getElementById('session').textContent = data.session_id ? data.session_id.substring(0, 12) + '...' : '--';
+            document.getElementById('energy').textContent = data.session_total_energy_kwh ? data.session_total_energy_kwh.toFixed(3) + ' kWh' : '--';
+        }
+        
+        function connect() {
+            const wsUrl = 'ws://localhost:8000/ws/live';
+            log(`Connecting to ${wsUrl}...`);
+            
+            ws = new WebSocket(wsUrl);
+            
+            ws.onopen = function(event) {
+                log('✅ Connected to WebSocket!');
+                updateStatus(true);
+            };
+            
+            ws.onmessage = function(event) {
+                try {
+                    const data = JSON.parse(event.data);
+                    log(`📊 Received: ${JSON.stringify(data)}`);
+                    updateData(data);
+                } catch (e) {
+                    log(`❌ Error parsing data: ${e.message}`);
+                }
+            };
+            
+            ws.onclose = function(event) {
+                log('🔌 WebSocket closed');
+                updateStatus(false);
+                ws = null;
+            };
+            
+            ws.onerror = function(event) {
+                log('❌ WebSocket error occurred');
+                updateStatus(false);
+            };
+        }
+        
+        function disconnect() {
+            if (ws) {
+                log('Disconnecting...');
+                ws.close();
+            }
+        }
+        
+        function clearLog() {
+            document.getElementById('log').innerHTML = '';
+        }
+        
+        // Auto-connect when page loads
+        window.onload = function() {
+            log('🚀 SolarRally WebSocket Test Page Loaded');
+            log('Click "Connect" to start receiving live telemetry data');
+        };
+    </script>
+</body>
+</html> 

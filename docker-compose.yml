@@ -10,3 +10,25 @@ services:
       - ./mosquitto/data:/mosquitto/data     # Mounts a local data directory for persistence
       - ./mosquitto/log:/mosquitto/log       # Mounts a local log directory
     restart: unless-stopped
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: solarrally_backend
+    ports:
+      - "8000:8000"  # FastAPI application port
+    environment:
+      - MQTT_BROKER_HOST=mosquitto  # Use service name for inter-container communication
+      - MQTT_BROKER_PORT=1883
+      - PYTHONPATH=/app
+    depends_on:
+      - mosquitto
+    volumes:
+      - ./backend:/app  # Mount source code for development (hot reload)
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3

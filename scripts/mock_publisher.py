@@ -10,14 +10,27 @@ from dotenv import load_dotenv
 # Load environment variables from .env file
 load_dotenv()
 
-# MQTT Configuration
+# MQTT Configuration with better error handling
 MQTT_BROKER_HOST = os.getenv("MQTT_BROKER_HOST", "localhost")
-MQTT_BROKER_PORT = int(os.getenv("MQTT_BROKER_PORT", 1883))
+try:
+    MQTT_BROKER_PORT = int(os.getenv("MQTT_BROKER_PORT", "1883"))
+except (ValueError, TypeError):
+    MQTT_BROKER_PORT = 1883
+    
 MQTT_USERNAME = os.getenv("MQTT_USERNAME") # Add if your broker needs auth
 MQTT_PASSWORD = os.getenv("MQTT_PASSWORD") # Add if your broker needs auth
 
 DEVICE_ID = os.getenv("MOCK_DEVICE_ID", "evse_mock_001")
-PUBLISH_INTERVAL_SECONDS = int(os.getenv("MOCK_PUBLISH_INTERVAL", 10))
+
+# Parse publish interval with better error handling
+try:
+    interval_str = os.getenv("MOCK_PUBLISH_INTERVAL", "10")
+    # Remove any comments from the environment variable value
+    interval_str = interval_str.split('#')[0].strip()
+    PUBLISH_INTERVAL_SECONDS = int(interval_str)
+except (ValueError, TypeError):
+    PUBLISH_INTERVAL_SECONDS = 10
+    print(f"Warning: Could not parse MOCK_PUBLISH_INTERVAL, using default: {PUBLISH_INTERVAL_SECONDS} seconds")
 
 # Telemetry Topic
 TELEMETRY_TOPIC = f"evse/{DEVICE_ID}/telemetry"

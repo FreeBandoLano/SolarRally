@@ -1,0 +1,77 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-gray-50 font-sans antialiased;
+  }
+  
+  * {
+    @apply border-gray-200;
+  }
+}
+
+@layer components {
+  .card {
+    @apply bg-white rounded-lg shadow-card p-6 transition-all duration-200 hover:shadow-card-hover;
+  }
+  
+  .stat-card {
+    @apply card border-l-4 hover:scale-105 cursor-pointer;
+  }
+  
+  .stat-card.solar {
+    @apply border-l-primary-500 hover:bg-primary-50;
+  }
+  
+  .stat-card.grid {
+    @apply border-l-secondary-500 hover:bg-secondary-50;
+  }
+  
+  .stat-card.charging {
+    @apply border-l-success-500 hover:bg-success-50;
+  }
+  
+  .stat-card.available {
+    @apply border-l-gray-400 hover:bg-gray-50;
+  }
+  
+  .status-indicator {
+    @apply w-3 h-3 rounded-full animate-pulse-slow;
+  }
+  
+  .status-available {
+    @apply bg-success-500;
+  }
+  
+  .status-charging {
+    @apply bg-primary-500;
+  }
+  
+  .status-preparing {
+    @apply bg-secondary-500;
+  }
+  
+  .status-finishing {
+    @apply bg-gray-500;
+  }
+  
+  .status-faulted {
+    @apply bg-red-500;
+  }
+}
+
+@layer utilities {
+  .text-gradient {
+    @apply bg-gradient-to-r from-primary-600 to-secondary-600 bg-clip-text text-transparent;
+  }
+  
+  .animate-fade-in {
+    animation: fadeIn 0.5s ease-in-out;
+  }
+  
+  .animate-slide-up {
+    animation: slideUp 0.3s ease-out;
+  }
+} 
