@@ -11,9 +11,11 @@ alembic==1.12.1  # Database migrations
 paho-mqtt==2.0.0
 
 # Authentication & Security
+fastapi-users[sqlalchemy]==12.1.2
 python-jose[cryptography]==3.3.0
 passlib[bcrypt]==1.7.4
 python-multipart==0.0.6
+email-validator==2.1.0
 
 # Environment variables
 python-dotenv==1.0.0

@@ -6,7 +6,7 @@ import SessionInfo from './SessionInfo'
 import EnergySourceIndicator from './EnergySourceIndicator'
 
 const Dashboard: React.FC = () => {
-  const { telemetryData, isConnected } = useWebSocket()
+  const { systemStats, evseUnits, isConnected } = useWebSocket()
 
   if (!isConnected) {
     return (
@@ -34,32 +34,37 @@ const Dashboard: React.FC = () => {
         <p className="text-lg text-gray-600">
           Monitor your hybrid solar/grid EV charging station
         </p>
+        {systemStats && (
+          <p className="text-sm text-gray-500 mt-2">
+            Managing {evseUnits.size} EVSE units • {systemStats.active_sessions} active sessions
+          </p>
+        )}
       </div>
 
       {/* Stats Grid */}
-      <StatsGrid telemetryData={telemetryData} />
+      <StatsGrid />
 
       {/* Main Content Grid */}
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
         {/* Power Chart - Takes up 2 columns on xl screens */}
         <div className="xl:col-span-2">
-          <PowerChart telemetryData={telemetryData} />
+          <PowerChart />
         </div>
 
         {/* Side Panel */}
         <div className="space-y-6">
           {/* Energy Source Indicator */}
-          <EnergySourceIndicator telemetryData={telemetryData} />
+          <EnergySourceIndicator />
           
           {/* Session Information */}
-          <SessionInfo telemetryData={telemetryData} />
+          <SessionInfo />
         </div>
       </div>
 
       {/* Status Message */}
-      {telemetryData && (
+      {systemStats && (
         <div className="text-center text-sm text-gray-500">
-          Last updated: {new Date(telemetryData.timestamp).toLocaleString()}
+          Last updated: {new Date(systemStats.last_updated).toLocaleString()}
         </div>
       )}
     </div>

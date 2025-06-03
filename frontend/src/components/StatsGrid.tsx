@@ -1,174 +1,202 @@
 import React from 'react'
-import { Battery, Zap, Thermometer, Activity, Sun, Grid3X3 } from 'lucide-react'
-import { clsx } from 'clsx'
+import { useWebSocket } from '../hooks/useWebSocket'
 
-interface TelemetryData {
-  timestamp: string
-  session_id: string | null
-  voltage_v: number
-  current_a: number
-  power_w: number
-  session_energy_kwh_solar: number
-  session_energy_kwh_grid: number
-  session_total_energy_kwh: number
-  energy_source: 'solar' | 'grid' | 'none'
-  temperature_c: number
-  status: 'available' | 'preparing' | 'charging' | 'finishing' | 'faulted'
-}
+const StatsGrid: React.FC = () => {
+  const { systemStats, evseUnits } = useWebSocket()
 
-interface StatsGridProps {
-  telemetryData: TelemetryData | null
-}
+  // Use system stats if available, otherwise show placeholder
+  const stats = systemStats || {
+    total_power_w: 0,
+    total_solar_energy_kwh: 0,
+    total_grid_energy_kwh: 0,
+    total_energy_kwh: 0,
+    avg_temperature_c: 0,
+    solar_percentage: 0,
+    active_sessions: 0,
+    available_units: 0,
+    charging_units: 0,
+    faulted_units: 0
+  }
 
-interface StatCardProps {
-  title: string
-  value: string
-  unit: string
-  icon: React.ComponentType<any>
-  color: 'solar' | 'grid' | 'charging' | 'available'
-  subtitle?: string
-}
+  const unitCount = evseUnits.size
 
-const StatCard: React.FC<StatCardProps> = ({ title, value, unit, icon: Icon, color, subtitle }) => {
+  // Calculate costs in Jamaican Dollars
+  const solarCostJMD = stats.total_solar_energy_kwh * 10 // JM$10/kWh for solar
+  const gridCostJMD = stats.total_grid_energy_kwh * 50    // JM$50/kWh for grid
+  const totalCostJMD = solarCostJMD + gridCostJMD
+
+  const statItems = [
+    {
+      label: 'Total Power',
+      value: `${stats.total_power_w.toLocaleString()}W`,
+      icon: '⚡',
+      color: stats.total_power_w > 0 ? 'text-green-600' : 'text-gray-500'
+    },
+    {
+      label: 'Active Units',
+      value: `${stats.charging_units}/${unitCount}`,
+      icon: '🔌',
+      color: stats.charging_units > 0 ? 'text-blue-600' : 'text-gray-500'
+    },
+    {
+      label: 'Solar Energy',
+      value: `${stats.total_solar_energy_kwh.toFixed(2)} kWh`,
+      icon: '☀️',
+      color: 'text-yellow-500'
+    },
+    {
+      label: 'Grid Energy',
+      value: `${stats.total_grid_energy_kwh.toFixed(2)} kWh`,
+      icon: '🏭',
+      color: 'text-blue-500'
+    },
+    {
+      label: 'Solar Usage',
+      value: `${stats.solar_percentage.toFixed(1)}%`,
+      icon: '🌱',
+      color: stats.solar_percentage > 50 ? 'text-green-500' : 'text-orange-500'
+    },
+    {
+      label: 'Avg Temperature',
+      value: `${stats.avg_temperature_c.toFixed(1)}°C`,
+      icon: '🌡️',
+      color: stats.avg_temperature_c > 40 ? 'text-red-500' : 'text-blue-500'
+    },
+    {
+      label: 'Session Cost',
+      value: `JM$${totalCostJMD.toFixed(2)}`,
+      icon: '💰',
+      color: 'text-green-600'
+    },
+    {
+      label: 'Total Energy',
+      value: `${stats.total_energy_kwh.toFixed(2)} kWh`,
+      icon: '🔋',
+      color: 'text-purple-600'
+    }
+  ]
+
+  // Status indicators for different unit states
+  const statusItems = [
+    {
+      label: 'Available',
+      count: stats.available_units,
+      icon: '✅',
+      color: 'text-green-600'
+    },
+    {
+      label: 'Charging',
+      count: stats.charging_units,
+      icon: '⚡',
+      color: 'text-blue-600'
+    },
+    {
+      label: 'Sessions',
+      count: stats.active_sessions,
+      icon: '🔄',
+      color: 'text-purple-600'
+    },
+    {
+      label: 'Faulted',
+      count: stats.faulted_units,
+      icon: '⚠️',
+      color: 'text-red-600'
+    }
+  ]
+
   return (
-    <div className={clsx('stat-card animate-slide-up', color)}>
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center space-x-2">
-          <Icon className="w-5 h-5 text-gray-600" />
-          <h3 className="text-sm font-medium text-gray-600 uppercase tracking-wide">
-            {title}
-          </h3>
-        </div>
-      </div>
-      
-      <div className="flex items-end space-x-1">
-        <span className="text-3xl font-bold text-gray-900">
-          {value}
-        </span>
-        <span className="text-lg font-medium text-gray-600 mb-1">
-          {unit}
-        </span>
-      </div>
-      
-      {subtitle && (
-        <p className="text-xs text-gray-500 mt-2">
-          {subtitle}
-        </p>
-      )}
-    </div>
-  )
-}
-
-const StatsGrid: React.FC<StatsGridProps> = ({ telemetryData }) => {
-  if (!telemetryData) {
-    return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {Array.from({ length: 8 }).map((_, i) => (
-          <div key={i} className="card animate-pulse">
-            <div className="h-4 bg-gray-200 rounded mb-3"></div>
-            <div className="h-8 bg-gray-200 rounded mb-2"></div>
-            <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+    <div className="space-y-6">
+      {/* System Overview */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {statItems.map((item, index) => (
+          <div
+            key={index}
+            className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 
+                     hover:shadow-md transition-shadow duration-200"
+          >
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600 mb-1">
+                  {item.label}
+                </p>
+                <p className={`text-xl font-bold ${item.color}`}>
+                  {item.value}
+                </p>
+              </div>
+              <div className="text-2xl opacity-75">
+                {item.icon}
+              </div>
+            </div>
           </div>
         ))}
       </div>
-    )
-  }
 
-  const isCharging = telemetryData.status === 'charging'
-  const currentPowerKw = telemetryData.power_w / 1000
-
-  return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-      {/* Voltage */}
-      <StatCard
-        title="Voltage"
-        value={telemetryData.voltage_v.toFixed(1)}
-        unit="V"
-        icon={Battery}
-        color={isCharging ? 'charging' : 'available'}
-        subtitle="AC Voltage"
-      />
-
-      {/* Current */}
-      <StatCard
-        title="Current"
-        value={telemetryData.current_a.toFixed(1)}
-        unit="A"
-        icon={Zap}
-        color={isCharging ? 'charging' : 'available'}
-        subtitle="AC Current"
-      />
-
-      {/* Power */}
-      <StatCard
-        title="Power"
-        value={currentPowerKw.toFixed(2)}
-        unit="kW"
-        icon={Activity}
-        color={isCharging ? 'charging' : 'available'}
-        subtitle={`${telemetryData.power_w.toFixed(0)} W`}
-      />
-
-      {/* Temperature */}
-      <StatCard
-        title="Temperature"
-        value={telemetryData.temperature_c.toFixed(1)}
-        unit="°C"
-        icon={Thermometer}
-        color="available"
-        subtitle="System Temperature"
-      />
-
-      {/* Solar Energy */}
-      <StatCard
-        title="Solar Energy"
-        value={telemetryData.session_energy_kwh_solar.toFixed(3)}
-        unit="kWh"
-        icon={Sun}
-        color="solar"
-        subtitle="Current Session"
-      />
-
-      {/* Grid Energy */}
-      <StatCard
-        title="Grid Energy"
-        value={telemetryData.session_energy_kwh_grid.toFixed(3)}
-        unit="kWh"
-        icon={Grid3X3}
-        color="grid"
-        subtitle="Current Session"
-      />
-
-      {/* Total Energy */}
-      <StatCard
-        title="Total Energy"
-        value={telemetryData.session_total_energy_kwh.toFixed(3)}
-        unit="kWh"
-        icon={Battery}
-        color="charging"
-        subtitle="Session Total"
-      />
-
-      {/* Status */}
-      <div className={clsx('stat-card', telemetryData.status === 'charging' ? 'charging' : 'available')}>
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center space-x-2">
-            <Activity className="w-5 h-5 text-gray-600" />
-            <h3 className="text-sm font-medium text-gray-600 uppercase tracking-wide">
-              Status
-            </h3>
-          </div>
-          <div className={clsx('status-indicator', `status-${telemetryData.status}`)}></div>
-        </div>
+      {/* Unit Status Overview */}
+      <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+          🏢 System Status
+          <span className="ml-2 text-sm font-normal text-gray-500">
+            ({unitCount} EVSE Units)
+          </span>
+        </h3>
         
-        <div className="text-2xl font-bold text-gray-900 capitalize mb-2">
-          {telemetryData.status}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {statusItems.map((status, index) => (
+            <div key={index} className="text-center">
+              <div className={`text-3xl ${status.color} mb-2`}>
+                {status.icon}
+              </div>
+              <div className={`text-2xl font-bold ${status.color} mb-1`}>
+                {status.count}
+              </div>
+              <div className="text-sm text-gray-600">
+                {status.label}
+              </div>
+            </div>
+          ))}
         </div>
-        
-        <p className="text-xs text-gray-500">
-          {telemetryData.session_id ? `Session: ${telemetryData.session_id.slice(0, 8)}...` : 'No active session'}
-        </p>
       </div>
+
+      {/* Cost Breakdown */}
+      {totalCostJMD > 0 && (
+        <div className="bg-gradient-to-r from-green-50 to-blue-50 rounded-xl p-6 border border-green-100">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+            💰 Session Cost Breakdown
+          </h3>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="text-center">
+              <div className="text-yellow-500 text-2xl mb-2">☀️</div>
+              <div className="text-lg font-bold text-gray-900">
+                JM${solarCostJMD.toFixed(2)}
+              </div>
+              <div className="text-sm text-gray-600">
+                Solar ({stats.total_solar_energy_kwh.toFixed(2)} kWh)
+              </div>
+            </div>
+            
+            <div className="text-center">
+              <div className="text-blue-500 text-2xl mb-2">🏭</div>
+              <div className="text-lg font-bold text-gray-900">
+                JM${gridCostJMD.toFixed(2)}
+              </div>
+              <div className="text-sm text-gray-600">
+                Grid ({stats.total_grid_energy_kwh.toFixed(2)} kWh)
+              </div>
+            </div>
+            
+            <div className="text-center">
+              <div className="text-green-500 text-2xl mb-2">💵</div>
+              <div className="text-xl font-bold text-green-600">
+                JM${totalCostJMD.toFixed(2)}
+              </div>
+              <div className="text-sm text-gray-600">
+                Total Cost
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

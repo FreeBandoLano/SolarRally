@@ -101,19 +101,32 @@ class MQTTManager:
         else:
             logger.error(f"Failed to connect to MQTT broker, return code {reason_code}")
     
-    def _on_disconnect(self, client, userdata, flags, reason_code, properties):
-        """Callback for when the client disconnects from the server"""
+    def _on_disconnect(self, client, userdata, *args):
+        """Callback for when the client disconnects from the server - handles both v1 and v2 signatures"""
         self.connected = False
+        
+        # Handle different callback signatures
+        if len(args) >= 1:
+            reason_code = args[0]
+        else:
+            reason_code = "unknown"
+            
         logger.warning(f"Disconnected from MQTT broker with result code {reason_code}")
     
     def _on_message(self, client, userdata, msg):
         """Callback for when a PUBLISH message is received from the server"""
         try:
+            # Extract unit ID from topic (e.g., "evse/evse_unit_01/telemetry" -> "evse_unit_01")
+            topic_parts = msg.topic.split('/')
+            unit_id = None
+            if len(topic_parts) >= 3 and topic_parts[0] == 'evse':
+                unit_id = topic_parts[1]  # The EVSE unit ID
+            
             # Parse the JSON payload
             payload_str = msg.payload.decode('utf-8')
             payload_data = json.loads(payload_str)
             
-            logger.debug(f"Received telemetry data from {msg.topic}: {payload_str}")
+            logger.debug(f"Received telemetry data from {msg.topic} (unit: {unit_id}): {payload_str}")
             
             # Validate the data using Pydantic model
             try:
@@ -129,18 +142,22 @@ class MQTTManager:
                 telemetry_dict = telemetry.dict()
                 telemetry_dict['timestamp'] = telemetry.timestamp.isoformat()
                 
+                # Add unit ID to the telemetry data for frontend processing
+                if unit_id:
+                    telemetry_dict['unit_id'] = unit_id
+                
                 # Forward to WebSocket clients using thread-safe async call
                 if self.loop and not self.loop.is_closed():
                     asyncio.run_coroutine_threadsafe(
                         self.websocket_manager.broadcast_telemetry(telemetry_dict),
                         self.loop
                     )
-                    logger.debug(f"Telemetry data forwarded to WebSocket clients")
+                    logger.debug(f"Telemetry data forwarded to WebSocket clients for unit {unit_id}")
                 else:
                     logger.warning("Event loop not available, cannot forward telemetry data")
                 
             except Exception as validation_error:
-                logger.warning(f"Invalid telemetry data received: {validation_error}")
+                logger.warning(f"Invalid telemetry data received from {unit_id}: {validation_error}")
                 logger.debug(f"Raw payload: {payload_str}")
         
         except json.JSONDecodeError as e:
